@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f1ea">
+  <title>Maps List Exporter</title>
+  <script>
+    const savedTheme = localStorage.getItem("maps-export-theme-preference");
+    const initialTheme = savedTheme
+      || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.dataset.theme = initialTheme;
+    document.querySelector('meta[name="theme-color"]').content = initialTheme === "dark"
+      ? "#151714"
+      : "#f4f1ea";
+  </script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
+  <script src="config.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="brand-copy">
+        <h1>Maps List Exporter</h1>
+        <p>Local workspace utility</p>
+      </div>
+      <button class="theme-button" id="theme-button" type="button" aria-label="Use dark theme" title="Toggle theme">
+        <i class="theme-sun" data-lucide="sun" aria-hidden="true"></i>
+        <i class="theme-moon" data-lucide="moon" aria-hidden="true"></i>
+      </button>
+      <div class="local-status">
+        <span class="status-dot"></span>
+        Local
+      </div>
+    </header>
+
+    <main class="workspace">
+      <div class="left-column">
+      <section class="control-pane" aria-labelledby="export-heading">
+        <div class="section-heading">
+          <p class="eyebrow">New export</p>
+          <h2 id="export-heading">Choose a Maps list</h2>
+        </div>
+
+        <form id="export-form" novalidate>
+          <div class="field-group">
+            <label for="list-url">Google Maps share URL</label>
+            <div class="input-shell" id="url-shell">
+              <i data-lucide="link-2" aria-hidden="true"></i>
+              <input
+                id="list-url"
+                name="list-url"
+                type="url"
+                inputmode="url"
+                autocomplete="url"
+                placeholder="https://maps.app.goo.gl/..."
+                required
+              >
+              <button class="icon-button clear-button" id="clear-url" type="button" aria-label="Clear URL" title="Clear URL">
+                <i data-lucide="x" aria-hidden="true"></i>
+              </button>
+            </div>
+            <p class="field-error" id="url-error" role="alert"></p>
+          </div>
+
+          <div class="field-group">
+            <label for="output-prefix">Filename prefix</label>
+            <div class="input-shell">
+              <i data-lucide="file-type-2" aria-hidden="true"></i>
+              <input
+                id="output-prefix"
+                name="output-prefix"
+                type="text"
+                value="google_maps_list_export"
+                maxlength="80"
+              >
+            </div>
+          </div>
+
+          <fieldset class="format-group">
+            <legend>Formats</legend>
+            <label class="format-option locked">
+              <input type="checkbox" checked disabled>
+              <span class="format-icon txt">TXT</span>
+              <span>
+                <strong>Text</strong>
+                <small>Always included</small>
+              </span>
+              <i data-lucide="check" aria-hidden="true"></i>
+            </label>
+            <label class="format-option">
+              <input id="format-json" type="checkbox">
+              <span class="format-icon json">{ }</span>
+              <span>
+                <strong>JSON</strong>
+                <small>Structured data</small>
+              </span>
+              <span class="check-box"><i data-lucide="check" aria-hidden="true"></i></span>
+            </label>
+            <label class="format-option">
+              <input id="format-csv" type="checkbox">
+              <span class="format-icon csv">CSV</span>
+              <span>
+                <strong>Spreadsheet</strong>
+                <small>Comma-separated</small>
+              </span>
+              <span class="check-box"><i data-lucide="check" aria-hidden="true"></i></span>
+            </label>
+          </fieldset>
+
+          <button class="primary-button" id="export-button" type="submit">
+            <i data-lucide="download" aria-hidden="true"></i>
+            <span>Start export</span>
+          </button>
+        </form>
+      </section>
+
+      <section class="data-section" id="data-section" aria-labelledby="places-heading">
+      <div class="data-header">
+        <div>
+          <p class="eyebrow">List contents</p>
+          <h2 id="places-heading">Place details</h2>
+        </div>
+        <div class="place-tools">
+          <label class="search-shell" for="place-search">
+            <i data-lucide="search" aria-hidden="true"></i>
+            <input id="place-search" type="search" placeholder="Filter places" autocomplete="off">
+          </label>
+          <span class="place-count" id="place-count">0 places</span>
+          <button class="icon-button expand-button" id="expand-list-button" type="button" aria-label="Expand list view" title="Expand list view">
+            <i data-lucide="maximize-2" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="places-empty" id="places-empty">
+        <i data-lucide="list" aria-hidden="true"></i>
+        <p id="places-empty-message">Place details will appear as they are scraped.</p>
+      </div>
+
+      <div class="places-table-wrap" id="places-table-wrap" hidden>
+        <table class="places-table">
+          <thead>
+            <tr>
+              <th scope="col">Place</th>
+              <th scope="col">Category</th>
+              <th scope="col">Rating</th>
+              <th scope="col">Contact</th>
+              <th scope="col"><span class="visually-hidden">View</span></th>
+            </tr>
+          </thead>
+          <tbody id="places-body"></tbody>
+        </table>
+      </div>
+      </section>
+      </div>
+
+      <section class="map-section" aria-labelledby="map-heading">
+        <div class="map-toolbar">
+          <div>
+          <p class="eyebrow">Live route</p>
+          <h2 id="map-heading">Map view</h2>
+          </div>
+          <button class="icon-button expand-button" id="expand-map-button" type="button" aria-label="Expand map view" title="Expand map view">
+            <i data-lucide="maximize-2" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="map-frame-shell" id="map-frame-shell">
+          <div class="map-placeholder" id="map-placeholder">
+            <i data-lucide="map" aria-hidden="true"></i>
+            <span>No location selected</span>
+          </div>
+          <div class="map-canvas" id="map-canvas" role="application" aria-label="Map of scraped places" hidden></div>
+          <div class="map-scan-line" id="map-scan-line" hidden></div>
+
+          <div class="map-location" id="map-location">
+            <span class="map-pulse"></span>
+            <div>
+              <strong>Waiting for a place</strong>
+              <span>The map will follow the scraper</span>
+            </div>
+          </div>
+
+          <section class="activity-pane" aria-labelledby="activity-heading">
+            <div class="activity-header">
+              <div>
+                <p class="eyebrow">Activity</p>
+                <h2 id="activity-heading">Export status</h2>
+              </div>
+              <span class="state-badge idle" id="state-badge">Ready</span>
+            </div>
+
+            <div class="empty-state" id="empty-state">
+              <h3>No export running</h3>
+              <p>Your generated files will appear here.</p>
+            </div>
+
+            <div class="progress-view" id="progress-view" hidden>
+              <div class="progress-summary">
+                <div class="scan-loader" id="progress-icon" aria-hidden="true">
+                  <span class="scan-ring ring-one"></span>
+                  <span class="scan-ring ring-two"></span>
+                  <span class="scan-sweep"></span>
+                  <i data-lucide="map-pin"></i>
+                </div>
+                <div>
+                  <p class="progress-list" id="progress-list">Opening list</p>
+                  <h3 id="progress-message">Starting Chromium</h3>
+                </div>
+              </div>
+              <div class="progress-track" aria-hidden="true">
+                <span id="progress-bar"></span>
+              </div>
+              <div class="progress-meta">
+                <span id="progress-stage">Preparing</span>
+                <span id="progress-eta">Estimating time</span>
+                <span id="progress-count"></span>
+              </div>
+            </div>
+
+            <div class="error-view" id="error-view" hidden role="alert">
+              <div class="error-icon"><i data-lucide="circle-alert" aria-hidden="true"></i></div>
+              <div>
+                <h3>Export stopped</h3>
+                <p id="error-message"></p>
+              </div>
+            </div>
+
+            <div class="results-view" id="results-view" hidden>
+              <div class="result-summary">
+                <div class="success-icon"><i data-lucide="check" aria-hidden="true"></i></div>
+                <div>
+                  <p>Export complete</p>
+                  <h3 id="result-list-name">Maps list</h3>
+                </div>
+              </div>
+              <div class="file-list" id="file-list"></div>
+              <button class="secondary-button" id="new-export-button" type="button">
+                <i data-lucide="plus" aria-hidden="true"></i>
+                New export
+              </button>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

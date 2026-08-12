@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+
+# Private browser data and generated exports
+maps_profile/
+exports/
+/google_maps_list_export_*.txt
+/google_maps_list_export_*.csv
+/google_maps_list_export_*.json
+
+# Editor and OS files
+.DS_Store
+.vscode/
