@@ -25,6 +25,11 @@ jobs:
               uses: actions/checkout@v4
             - name: Configure Pages
               uses: actions/configure-pages@v5
+            - name: Configure exporter service
+              env:
+                  MAPS_EXPORT_API_URL: ${{ vars.MAPS_EXPORT_API_URL }}
+              run: |
+                  node -e 'const fs = require("fs"); const url = (process.env.MAPS_EXPORT_API_URL || "").replace(/\/$/, ""); fs.writeFileSync("maps_export_ui/config.js", `window.MAPS_EXPORT_CONFIG = { apiBaseUrl: ${JSON.stringify(url)} };\n`);'
             - name: Upload frontend
               uses: actions/upload-pages-artifact@v3
               with:

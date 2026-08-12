@@ -29,15 +29,15 @@
       </div>
       <div class="brand-copy">
         <h1>Maps List Exporter</h1>
-        <p>Local workspace utility</p>
+        <p>Google Maps saved-list utility</p>
       </div>
       <button class="theme-button" id="theme-button" type="button" aria-label="Use dark theme" title="Toggle theme">
         <i class="theme-sun" data-lucide="sun" aria-hidden="true"></i>
         <i class="theme-moon" data-lucide="moon" aria-hidden="true"></i>
       </button>
-      <div class="local-status">
+      <div class="local-status" id="service-status" role="status" title="Checking exporter service">
         <span class="status-dot"></span>
-        Local
+        <span id="service-status-label">Checking service</span>
       </div>
     </header>
 

@@ -99,6 +99,8 @@ button { cursor: pointer; }
 :root[data-theme="dark"] .theme-moon { display: block; }
 .local-status { margin-left: 14px; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #32a56f; box-shadow: 0 0 0 4px rgba(50, 165, 111, 0.12); }
+.local-status.unavailable .status-dot { background: #cf6b55; box-shadow: 0 0 0 4px rgba(207, 107, 85, 0.12); }
+.local-status.checking .status-dot { background: #d2a43a; box-shadow: 0 0 0 4px rgba(210, 164, 58, 0.12); }
 
 .workspace { height: calc(100vh - 110px); min-height: 700px; display: grid; grid-template-columns: minmax(390px, 460px) minmax(0, 1fr); }
 .left-column { min-height: 0; display: grid; grid-template-rows: auto minmax(300px, 1fr); border-right: 1px solid var(--line); }

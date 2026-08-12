@@ -44,18 +44,13 @@ GitHub Pages can host the frontend, but it cannot run Python, Playwright, Chromi
    python maps_export_ui.py
    ```
 
-3. Edit `maps_export_ui/config.js` before deployment:
-
-   ```js
-   window.MAPS_EXPORT_CONFIG = {
-     apiBaseUrl: "https://your-exporter-service.example.com",
-   };
-   ```
-
+3. In the GitHub repository, open **Settings > Secrets and variables > Actions > Variables** and create a repository variable named `MAPS_EXPORT_API_URL`. Set it to the public HTTPS URL of the Python service, without a trailing slash.
 4. Push the repository to GitHub with `main` as the default branch.
-5. In repository settings, choose **Pages > Source > GitHub Actions**.
+5. In repository settings, choose **Pages > Build and deployment > Source > GitHub Actions**.
 
-The workflow in `.github/workflows/pages.yml` publishes only `maps_export_ui/`. Keep `maps_profile/` private; it contains your Google browser session.
+The workflow in `.github/workflows/pages.yml` injects that service URL at deploy time and publishes only `maps_export_ui/`. The header shows **Service connected** when the page can reach it. Keep `maps_profile/` private; it contains your Google browser session.
+
+The final Pages URL will be `https://YOUR-NAME.github.io/REPOSITORY/`. GitHub Pages serves only the browser interface; the export continues to run on the separately hosted Python service.
 
 ## Data and security
 

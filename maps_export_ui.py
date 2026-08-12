@@ -314,6 +314,10 @@ class MapsExportHandler(SimpleHTTPRequestHandler):
         self.send_json(public_job(job), HTTPStatus.ACCEPTED)
 
     def do_GET(self):
+        if self.path == "/api/health":
+            self.send_json({"status": "ok"})
+            return
+
         job_match = re.fullmatch(r"/api/jobs/([a-f0-9]{32})", self.path)
         file_match = re.fullmatch(
             r"/api/jobs/([a-f0-9]{32})/files/([^/]+)", self.path

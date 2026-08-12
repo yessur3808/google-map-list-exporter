@@ -39,6 +39,8 @@ const mapScanLine = document.querySelector("#map-scan-line");
 const expandListButton = document.querySelector("#expand-list-button");
 const expandMapButton = document.querySelector("#expand-map-button");
 const appShell = document.querySelector(".app-shell");
+const serviceStatus = document.querySelector("#service-status");
+const serviceStatusLabel = document.querySelector("#service-status-label");
 
 let pollTimer = null;
 let latestPlaces = [];
@@ -56,6 +58,25 @@ const API_BASE_URL = String(window.MAPS_EXPORT_CONFIG?.apiBaseUrl || "").replace
 
 function apiUrl(path) {
   return `${API_BASE_URL}${path}`;
+}
+
+async function checkService() {
+  serviceStatus.className = "local-status checking";
+  serviceStatusLabel.textContent = "Checking service";
+  try {
+    if (location.hostname.endsWith(".github.io") && !API_BASE_URL) {
+      throw new Error("Exporter service not configured");
+    }
+    const response = await fetch(apiUrl("/api/health"), { cache: "no-store" });
+    if (!response.ok) throw new Error("Exporter service unavailable");
+    serviceStatus.className = "local-status";
+    serviceStatusLabel.textContent = API_BASE_URL ? "Service connected" : "Local service";
+    serviceStatus.title = API_BASE_URL || "The exporter is running on this computer";
+  } catch (error) {
+    serviceStatus.className = "local-status unavailable";
+    serviceStatusLabel.textContent = "Service unavailable";
+    serviceStatus.title = error.message;
+  }
 }
 
 function refreshIcons() {
@@ -556,4 +577,5 @@ window.addEventListener("DOMContentLoaded", () => {
   restoreDefaults();
   setTheme(document.documentElement.dataset.theme || "light");
   refreshIcons();
+  checkService();
 });
