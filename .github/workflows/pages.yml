@@ -23,17 +23,45 @@ jobs:
         steps:
             - name: Check out repository
               uses: actions/checkout@v4
+            - name: Check Pages configuration
+              id: pages
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+                  PAGES_API_URL: ${{ github.api_url }}/repos/${{ github.repository }}/pages
+              run: |
+                  status="$(curl -sS -o /tmp/pages-response.json -w '%{http_code}' \
+                    -H "Authorization: ******" \
+                    -H "Accept: application/vnd.github+json" \
+                    "$PAGES_API_URL")"
+                  case "$status" in
+                    200)
+                      echo "enabled=true" >> "$GITHUB_OUTPUT"
+                      ;;
+                    404)
+                      echo "enabled=false" >> "$GITHUB_OUTPUT"
+                      echo "::notice title=GitHub Pages is not enabled::Enable Pages and set the source to GitHub Actions in repository settings to publish this frontend."
+                      ;;
+                    *)
+                      cat /tmp/pages-response.json
+                      echo "::error title=Failed to query GitHub Pages::Unexpected HTTP status $status while checking repository Pages configuration."
+                      exit 1
+                      ;;
+                  esac
             - name: Configure Pages
+              if: steps.pages.outputs.enabled == 'true'
               uses: actions/configure-pages@v5
             - name: Configure exporter service
+              if: steps.pages.outputs.enabled == 'true'
               env:
                   MAPS_EXPORT_API_URL: ${{ vars.MAPS_EXPORT_API_URL }}
               run: |
                   node -e 'const fs = require("fs"); const url = (process.env.MAPS_EXPORT_API_URL || "").replace(/\/$/, ""); fs.writeFileSync("maps_export_ui/config.js", `window.MAPS_EXPORT_CONFIG = { apiBaseUrl: ${JSON.stringify(url)} };\n`);'
             - name: Upload frontend
+              if: steps.pages.outputs.enabled == 'true'
               uses: actions/upload-pages-artifact@v3
               with:
                   path: maps_export_ui
             - name: Deploy Pages
+              if: steps.pages.outputs.enabled == 'true'
               id: deployment
               uses: actions/deploy-pages@v4
