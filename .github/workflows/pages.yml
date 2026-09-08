@@ -26,11 +26,9 @@ jobs:
             - name: Check Pages configuration
               id: pages
               env:
-                  GITHUB_TOKEN: ${{ github.token }}
                   PAGES_API_URL: ${{ github.api_url }}/repos/${{ github.repository }}/pages
               run: |
                   status="$(curl -sS -o /tmp/pages-response.json -w '%{http_code}' \
-                    -H "Authorization: ******" \
                     -H "Accept: application/vnd.github+json" \
                     "$PAGES_API_URL")"
                   case "$status" in
