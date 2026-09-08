@@ -26,25 +26,18 @@ jobs:
             - name: Check Pages configuration
               id: pages
               env:
-                  PAGES_API_URL: ${{ github.api_url }}/repos/${{ github.repository }}/pages
+                  GH_TOKEN: ${{ github.token }}
+                  PAGES_API_PATH: repos/${{ github.repository }}/pages
               run: |
-                  status="$(curl -sS -o /tmp/pages-response.json -w '%{http_code}' \
-                    -H "Accept: application/vnd.github+json" \
-                    "$PAGES_API_URL")"
-                  case "$status" in
-                    200)
-                      echo "enabled=true" >> "$GITHUB_OUTPUT"
-                      ;;
-                    404)
+                  if gh api -H "Accept: application/vnd.github+json" "$PAGES_API_PATH" > /tmp/pages-response.json 2> /tmp/pages-error.log; then
+                    echo "enabled=true" >> "$GITHUB_OUTPUT"
+                  elif grep -q "HTTP 404" /tmp/pages-error.log; then
                       echo "enabled=false" >> "$GITHUB_OUTPUT"
                       echo "::notice title=GitHub Pages is not enabled::Enable Pages and set the source to GitHub Actions in repository settings to publish this frontend."
-                      ;;
-                    *)
-                      cat /tmp/pages-response.json
-                      echo "::error title=Failed to query GitHub Pages::Unexpected HTTP status $status while checking repository Pages configuration."
-                      exit 1
-                      ;;
-                  esac
+                  else
+                    cat /tmp/pages-error.log
+                    exit 1
+                  fi
             - name: Configure Pages
               if: steps.pages.outputs.enabled == 'true'
               uses: actions/configure-pages@v5
