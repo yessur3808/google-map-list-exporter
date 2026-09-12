@@ -23,13 +23,19 @@ jobs:
         steps:
             - name: Check out repository
               uses: actions/checkout@v5
-            - name: Check Pages configuration
+            - name: Configure Pages publishing source
               id: pages
               env:
                   GH_TOKEN: ${{ github.token }}
                   PAGES_API_PATH: repos/${{ github.repository }}/pages
               run: |
                   if gh api -H "Accept: application/vnd.github+json" "$PAGES_API_PATH" > /tmp/pages-response.json 2> /tmp/pages-error.log; then
+                    gh api \
+                      --method PUT \
+                      -H "Accept: application/vnd.github+json" \
+                      "$PAGES_API_PATH" \
+                      -f build_type=workflow \
+                      > /dev/null
                     echo "enabled=true" >> "$GITHUB_OUTPUT"
                   elif grep -q "HTTP 404" /tmp/pages-error.log; then
                       echo "enabled=false" >> "$GITHUB_OUTPUT"
